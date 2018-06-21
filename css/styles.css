@@ -152,8 +152,7 @@ img {
   margin: 0 -30px;
 }
 .restaurant-img {
-  border-top-left-radius: 5px;
-  border-top-right-radius: 5px;
+  border-radius: 5px 5px 0 0;
   display: block;
 }
 .restaurant-title {
@@ -221,11 +220,12 @@ img {
 }
 #restaurant-cuisine {
   background-color: #333;
+  border-radius: 0 0 5px 5px;
   color: #bad455;
-  font-size: 14px;
+  font-size: 1.6rem;
+  letter-spacing: 0.2rem;
   font-weight: bold;
-  letter-spacing: 10px;
-  margin: 0 0 20px;
+  margin: 0;
   padding: 2px 0;
   text-align: center;
   text-transform: uppercase;
@@ -243,7 +243,6 @@ img {
 #reviews-list {
   display: flex;
   flex-wrap: wrap;
-  align-items: space-around;
   justify-content: space-around;
   margin: 0;
   padding: 0;
@@ -259,7 +258,14 @@ img {
   list-style: none;
   margin-bottom: 15px;
   margin-right: 15px;
-  padding: 10px;
+  padding: 0 10px;
+}
+.reviews-list-item__name,
+.reviews-list-item__date,
+.reviews-list-item__rating {
+  font-weight: bold;
+}
+  font-weight: bold;
 }
 #restaurant-hours {
   margin: 0 auto 15px auto;
