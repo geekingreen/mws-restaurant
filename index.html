@@ -3,6 +3,7 @@
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <link rel="stylesheet" href="css/styles.css">
@@ -12,7 +13,9 @@
 <body>
   <header>
     <nav class="top-bar">
-      <h1 class="app-name"><a class="app-link" href="/">Restaurant Reviews</a></h1>
+      <h1 class="app-name">
+        <a class="app-link" href="/">Restaurant Reviews</a>
+      </h1>
     </nav>
   </header>
 
@@ -34,12 +37,16 @@
     </section>
   </main>
 
+  <script type="application/javascript" charset="utf-8" src="js/sw-helper.js"></script>
   <script type="application/javascript" charset="utf-8" src="js/dbhelper.js"></script>
   <script type="application/javascript" charset="utf-8" src="js/main.js"></script>
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyA1e64IZL8X_1_I0kg4D0v1zWydW3eXkOc&libraries=places&callback=initMap"></script>
 
   <footer class="footer">
-    Copyright © 2018 <a class="footer-link" href="/"><strong>Restaurant Reviews</strong></a> All Rights Reserved.
+    Copyright © 2018
+    <a class="footer-link" href="/">
+      <strong>Restaurant Reviews</strong>
+    </a> All Rights Reserved.
   </footer>
 
 </body>
