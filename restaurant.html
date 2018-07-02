@@ -21,11 +21,13 @@
       </h1>
     </nav>
     <!-- Beginning breadcrumb -->
-    <ul class="breadcrumb" id="breadcrumb" >
-      <li class="breadcrumb-item">
-        <a class="breadcrumb-link" href="/">Home</a>
-      </li>
-    </ul>
+    <nav aria-label="Breadcrumb">
+      <ul class="breadcrumb" id="breadcrumb" >
+        <li class="breadcrumb-item">
+          <a class="breadcrumb-link" href="/">Home</a>
+        </li>
+      </ul>
+    </nav>
     <!-- End breadcrumb -->
     <!-- End nav -->
   </header>
@@ -34,7 +36,7 @@
   <!-- Beginning main -->
   <main class="main-content restaurant-flex">
     <!-- Beginning restaurant -->
-    <h1 id="restaurant-name" class="restaurant-full"></h1>
+    <h2 id="restaurant-name" class="restaurant-full"></h2>
     <section id="restaurant-container" class="restaurant-half">
       <img id="restaurant-img">
       <p id="restaurant-cuisine"></p>
@@ -44,7 +46,7 @@
     <!-- end restaurant -->
     <!-- Beginning map -->
     <section class="map-container restaurant-half">
-      <div id="map"></div>
+      <div id="map" role="application" tabindex="-1"></div>
     </section>
     <!-- End map -->
     <!-- Beginning reviews -->
