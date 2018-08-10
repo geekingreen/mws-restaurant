@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#b4d455" />
   <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
   <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
   <link rel="stylesheet" src="//normalize-css.googlecode.com/svn/trunk/normalize.css" />
   <link rel="stylesheet" href="css/styles.css">
+  <link rel="manifest" href="/manifest.webmanifest">
   <title>Restaurant Reviews</title>
 </head>
 
@@ -26,12 +28,18 @@
     <section>
       <div class="filter-options">
         <h2 class="filter-options-header">Filter Results</h2>
-        <select class="filter-options-select" id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()">
-          <option value="all">All Neighborhoods</option>
-        </select>
-        <select class="filter-options-select" id="cuisines-select" name="cuisines" onchange="updateRestaurants()">
-          <option value="all">All Cuisines</option>
-        </select>
+        <label>
+          Neighborhoods
+          <select class="filter-options-select" id="neighborhoods-select" name="neighborhoods" onchange="updateRestaurants()">
+            <option value="all">All Neighborhoods</option>
+          </select>
+        </label>
+        <label>
+          Cuisines
+          <select class="filter-options-select" id="cuisines-select" name="cuisines" onchange="updateRestaurants()">
+            <option value="all">All Cuisines</option>
+          </select>
+        </label>
       </div>
       <ul id="restaurants-list"></ul>
     </section>
@@ -47,6 +55,10 @@
     <a class="footer-link" href="/">
       <strong>Restaurant Reviews</strong>
     </a> All Rights Reserved.
+    <br /> Burger Icon made by Freepik from
+    <a class="footer-link" href="https://flaticon.com">
+      www.flaticon.com
+    </a>
   </footer>
 
 </body>

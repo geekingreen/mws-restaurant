@@ -108,7 +108,7 @@ img {
   font-size: 1.4rem;
   font-weight: normal;
   line-height: 1;
-  margin: 0;
+  margin: 0 10px 0 0;
 }
 .filter-options-select {
   background-color: #fff;
@@ -156,7 +156,7 @@ img {
   display: block;
 }
 .restaurant-title {
-  color: #87a122;
+  color: #658011;
   font-size: 14pt;
   font-weight: bold;
   letter-spacing: 0;
