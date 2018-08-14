@@ -1,6 +1,9 @@
 const STATIC_CACHE = 'mws-static-v1';
 const IMG_CACHE = 'mws-img-v1';
 const CACHES = [STATIC_CACHE, IMG_CACHE];
+const RESTAURANT_DB = 'mws-restaurants';
+const RESTAURANT_DB_STORE = 'restaurants';
+const RESTAURANT_DB_VERSION = 1;
 
 /*
   Using caddy web server and attempting to just store
@@ -19,6 +22,62 @@ const DEFAULT_ASSETS = [
   '/js/restaurant_info.js',
   '/js/sw-helper.js'
 ];
+
+function openRestaurantStore() {
+  return new Promise((resolve, reject) => {
+    const openRequest = indexedDB.open(RESTAURANT_DB, RESTAURANT_DB_VERSION);
+
+    openRequest.onupgradeneeded = e => {
+      const db = openRequest.result;
+      db.onerror = () => console.error('IndexedDB failed to upgrade');
+
+      if (e.oldVersion < 1) {
+        db.createObjectStore(RESTAURANT_DB_STORE, {
+          keyPath: 'id'
+        });
+      }
+    };
+
+    openRequest.onsuccess = () => {
+      const db = openRequest.result;
+      const tx = db.transaction(RESTAURANT_DB_STORE, 'readwrite');
+      const store = tx.objectStore(RESTAURANT_DB_STORE);
+      resolve(store);
+    };
+
+    openRequest.onerror = reject;
+  });
+}
+
+function fetchData(req) {
+  return new Promise((resolve, reject) => {
+    fetch(req)
+      .then(res => {
+        resolve(res.clone());
+        res.json().then(data => {
+          openRestaurantStore().then(store => {
+            data.forEach(restaurant => store.put(restaurant));
+          });
+        });
+      })
+      .catch(() => {
+        openRestaurantStore()
+          .then(store => {
+            const getAllRequest = store.getAll();
+            getAllRequest.onsuccess = () => {
+              resolve(
+                new Response(JSON.stringify(getAllRequest.result), {
+                  status: 200,
+                  statusText: 'OK',
+                  headers: { 'Content-Type': 'application/json' }
+                })
+              );
+            };
+          })
+          .catch(() => console.error('Cannot Open Store'));
+      });
+  });
+}
 
 function fetchImage(req) {
   return caches.open(IMG_CACHE).then(cache =>
@@ -59,6 +118,10 @@ self.addEventListener('fetch', e => {
 
   if (requestUrl.pathname.startsWith('/restaurant.html')) {
     return e.respondWith(caches.match('/restaurant.html'));
+  }
+
+  if (/^\/restaurants\/?(?:\d+)?/.test(requestUrl.pathname)) {
+    return e.respondWith(fetchData(e.request));
   }
 
   if (requestUrl.pathname.startsWith('/img/')) {
