@@ -193,6 +193,12 @@ img {
   box-shadow: 0px 0px 2px 2px #333;
 }
 
+.restaurant-actions {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
 /* ====================== Restaurant Details ====================== */
 .restaurant-flex {
   display: flex;

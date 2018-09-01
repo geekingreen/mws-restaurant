@@ -3,7 +3,8 @@ const IMG_CACHE = 'mws-img-v1';
 const CACHES = [STATIC_CACHE, IMG_CACHE];
 const RESTAURANT_DB = 'mws-restaurants';
 const RESTAURANT_DB_STORE = 'restaurants';
-const RESTAURANT_DB_VERSION = 1;
+const REVIEW_DB_STORE = 'reviews';
+const RESTAURANT_DB_VERSION = 2;
 
 /*
   Using caddy web server and attempting to just store
@@ -16,14 +17,20 @@ const DEFAULT_ASSETS = [
   '/index.html',
   '/restaurant.html',
   '/css/styles.css',
-  '/data/restaurants.json',
   '/js/dbhelper.js',
   '/js/main.js',
   '/js/restaurant_info.js',
   '/js/sw-helper.js'
 ];
 
-function openRestaurantStore() {
+const responsify = value =>
+  new Response(JSON.stringify(value), {
+    status: 200,
+    statusText: 'OK',
+    headers: { 'Content-Type': 'application/json' }
+  });
+
+function openStore(storeName) {
   return new Promise((resolve, reject) => {
     const openRequest = indexedDB.open(RESTAURANT_DB, RESTAURANT_DB_VERSION);
 
@@ -36,12 +43,22 @@ function openRestaurantStore() {
           keyPath: 'id'
         });
       }
+
+      if (e.oldVersion < 2) {
+        const reviewsStore = db.createObjectStore(REVIEW_DB_STORE, {
+          keyPath: 'id'
+        });
+
+        reviewsStore.createIndex('restaurantId', 'restaurant_id', {
+          unique: false
+        });
+      }
     };
 
     openRequest.onsuccess = () => {
       const db = openRequest.result;
-      const tx = db.transaction(RESTAURANT_DB_STORE, 'readwrite');
-      const store = tx.objectStore(RESTAURANT_DB_STORE);
+      const tx = db.transaction(storeName, 'readwrite');
+      const store = tx.objectStore(storeName);
       resolve(store);
     };
 
@@ -49,32 +66,59 @@ function openRestaurantStore() {
   });
 }
 
-function fetchData(req) {
+function fetchRestaurants(req) {
+  const requestUrl = new URL(req.url);
+  const matches = requestUrl.pathname.match(/(\d+)\/?$/);
+
   return new Promise((resolve, reject) => {
     fetch(req)
       .then(res => {
         resolve(res.clone());
         res.json().then(data => {
-          openRestaurantStore().then(store => {
-            data.forEach(restaurant => store.put(restaurant));
+          const arr = matches ? [data] : data;
+          openStore(RESTAURANT_DB_STORE).then(store => {
+            arr.forEach(restaurant => store.put(restaurant));
           });
         });
       })
       .catch(() => {
-        openRestaurantStore()
+        openStore(RESTAURANT_DB_STORE)
           .then(store => {
-            const getAllRequest = store.getAll();
-            getAllRequest.onsuccess = () => {
-              resolve(
-                new Response(JSON.stringify(getAllRequest.result), {
-                  status: 200,
-                  statusText: 'OK',
-                  headers: { 'Content-Type': 'application/json' }
-                })
-              );
+            const getRequest = matches
+              ? store.get(Number(matches[1]))
+              : store.getAll();
+            getRequest.onsuccess = () => {
+              resolve(responsify(getRequest.result));
             };
           })
           .catch(() => console.error('Cannot Open Store'));
+      });
+  });
+}
+
+function fetchReviews(req) {
+  const requestUrl = new URL(req.url);
+  const restaurantId = requestUrl.searchParams.get('restaurant_id');
+
+  return new Promise((resolve, reject) => {
+    fetch(req)
+      .then(res => {
+        resolve(res.clone());
+        res.json().then(data => {
+          openStore(REVIEW_DB_STORE).then(store => {
+            data.forEach(review => store.put(review));
+          });
+        });
+      })
+      .catch(() => {
+        openStore(REVIEW_DB_STORE).then(store => {
+          store
+            .index('restaurantId')
+            .getAll(Number(restaurantId)).onsuccess = event => {
+            const reviews = event.target.result;
+            resolve(responsify(reviews));
+          };
+        });
       });
   });
 }
@@ -121,7 +165,11 @@ self.addEventListener('fetch', e => {
   }
 
   if (/^\/restaurants\/?(?:\d+)?/.test(requestUrl.pathname)) {
-    return e.respondWith(fetchData(e.request));
+    return e.respondWith(fetchRestaurants(e.request));
+  }
+
+  if (/^\/reviews/.test(requestUrl.pathname)) {
+    return e.respondWith(fetchReviews(e.request));
   }
 
   if (requestUrl.pathname.startsWith('/img/')) {
