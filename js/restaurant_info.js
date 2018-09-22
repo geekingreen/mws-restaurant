@@ -51,10 +51,19 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   const address = document.getElementById('restaurant-address');
   address.innerHTML = restaurant.address;
 
+  const imgUrl = DBHelper.imageUrlForRestaurant(restaurant);
   const image = document.getElementById('restaurant-img');
-  image.className = 'restaurant-img';
-  image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  image.alt = restaurant.name;
+  const source1 = document.createElement('source');
+  source1.srcset = `${imgUrl}.webp`;
+  const source2 = document.createElement('source');
+  source2.srcset = `${imgUrl}.jpg`;
+  const img = document.createElement('img');
+  img.className = 'restaurant-img';
+  img.src = `${imgUrl}.jpg`;
+  img.alt = restaurant.name;
+  image.appendChild(source1);
+  image.appendChild(source2);
+  image.appendChild(img);
 
   const cuisine = document.getElementById('restaurant-cuisine');
   cuisine.innerHTML = restaurant.cuisine_type;
@@ -89,6 +98,53 @@ fillRestaurantHoursHTML = (
   }
 };
 
+createReviewForm = e => {
+  const restaurant = self.restaurant;
+  const form = document.createElement('form');
+  form.className = 'review-form';
+
+  const nameLabel = document.createElement('label');
+  nameLabel.innerHTML = 'Name: ';
+  const nameInput = document.createElement('input');
+  nameInput.name = 'name';
+  nameLabel.appendChild(nameInput);
+
+  const ratingLabel = document.createElement('label');
+  ratingLabel.innerHTML = 'Rating: ';
+  const ratingInput = document.createElement('input');
+  ratingInput.name = 'rating';
+  ratingInput.type = 'number';
+  ratingInput.min = 1;
+  ratingInput.max = 5;
+  ratingLabel.appendChild(ratingInput);
+
+  const commentLabel = document.createElement('label');
+  commentLabel.innerHTML = 'Comments: <br />';
+  const commentInput = document.createElement('textarea');
+  commentInput.name = 'comments';
+  commentLabel.appendChild(commentInput);
+
+  const submitButton = document.createElement('button');
+  submitButton.type = 'submit';
+  submitButton.innerHTML = 'Submit Comment';
+
+  form.appendChild(nameLabel);
+  form.appendChild(ratingLabel);
+  form.appendChild(commentLabel);
+  form.appendChild(submitButton);
+
+  form.onsubmit = e => {
+    e.preventDefault();
+    DBHelper.submitRestaurantReview(e, restaurant).then(review => {
+      console.log(review);
+      const reviewsList = document.getElementById('reviews-list');
+      reviewsList.appendChild(createReviewHTML(review));
+    }).catch(err => console.error(err));
+  };
+
+  return form;
+};
+
 /**
  * Create all reviews HTML and add them to the webpage.
  */
@@ -97,8 +153,9 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
   container.appendChild(title);
+  container.appendChild(createReviewForm());
 
-  if (!reviews) {
+  if (!reviews || reviews.length === 0) {
     const noReviews = document.createElement('p');
     noReviews.innerHTML = 'No reviews yet!';
     container.appendChild(noReviews);
@@ -125,7 +182,8 @@ createReviewHTML = review => {
   const date = document.createElement('p');
   const reviewDate = new Date(review.createdAt);
   date.classList.add('reviews-list-item__date');
-  date.innerHTML = `${reviewDate.getMonth() + 1}/${reviewDate.getDate()}/${reviewDate.getFullYear()}`;
+  date.innerHTML = `${reviewDate.getMonth() +
+    1}/${reviewDate.getDate()}/${reviewDate.getFullYear()}`;
   li.appendChild(date);
 
   const rating = document.createElement('p');

@@ -109,6 +109,19 @@ class DBHelper {
     );
   }
 
+  static submitRestaurantReview(e, restaurant) {
+    const jsonData = {
+      restaurant_id: restaurant.id
+    };
+    e.target
+      .querySelectorAll('input,textarea')
+      .forEach(input => (jsonData[input.name] = input.value));
+    return DBHelper.fetch(`${DBHelper.DATABASE_URL}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(jsonData)
+    });
+  }
+
   /**
    * Restaurant page URL.
    */
@@ -120,10 +133,9 @@ class DBHelper {
    * Restaurant image URL.
    */
   static imageUrlForRestaurant(restaurant) {
-    if (restaurant.photograph) {
-      return `/img/${restaurant.photograph}.jpg`;
-    }
-    return '/img/not-found.png';
+    return restaurant.photograph
+      ? `/img/${restaurant.photograph}`
+      : '/img/not-found';
   }
 
   /**

@@ -19,7 +19,8 @@ if ('serviceWorker' in navigator) {
       reg.addEventListener('updatefound', () => {
         trackInstalling(reg.installing);
       });
-    });
+    })
+    .catch(err => console.error(err));
 
   function updateReady(worker) {
     const shouldUpdate = confirm('Update available! Reload?');

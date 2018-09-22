@@ -4,7 +4,8 @@ const CACHES = [STATIC_CACHE, IMG_CACHE];
 const RESTAURANT_DB = 'mws-restaurants';
 const RESTAURANT_DB_STORE = 'restaurants';
 const REVIEW_DB_STORE = 'reviews';
-const RESTAURANT_DB_VERSION = 2;
+const REQUEST_DB_STORE = 'requests';
+const RESTAURANT_DB_VERSION = 3;
 
 /*
   Using caddy web server and attempting to just store
@@ -22,6 +23,95 @@ const DEFAULT_ASSETS = [
   '/js/restaurant_info.js',
   '/js/sw-helper.js'
 ];
+
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
+const enqueueRequest = req =>
+  serializeRequest(req).then(serializedRequest =>
+    openStore(REQUEST_DB_STORE).then(
+      store =>
+        new Promise(resolve => {
+          const localId = new Date().valueOf();
+          store.put({ ...serializedRequest, localId }).onsuccess = () =>
+            resolve(localId);
+        })
+    )
+  );
+
+const flushQueue = () =>
+  openStore(REQUEST_DB_STORE).then(store => {
+    return new Promise(resolve => {
+      store.getAll().onsuccess = event => {
+        const requests = event.target.result;
+        if (!requests.length) {
+          resolve();
+        }
+        resolve(
+          requests
+            .reduce(
+              (prevPromise, serializedRequest) =>
+                prevPromise.then(() =>
+                  deserializeRequest(serializedRequest).then(request =>
+                    fetch(request)
+                  )
+                ),
+              Promise.resolve()
+            )
+            .then(
+              () =>
+                new Promise(resolve => {
+                  openStore(REQUEST_DB_STORE).then(store => {
+                    store.clear();
+                  });
+                  openStore(REVIEW_DB_STORE).then(store => {
+                    store.index('temp').onsuccess = e => {
+                      e.target.result.openCursor().onsuccess = e => {
+                        const cursor = e.target.result;
+                        while (cursor) {
+                          cursor.delete();
+                          cursor.continue();
+                        }
+                      };
+                    };
+                  });
+                  resolve();
+                })
+            )
+        );
+      };
+    });
+  });
+
+const serializeRequest = req => {
+  const headers = {};
+
+  for (let header of req.headers.entries()) {
+    headers[header[0]] = header[1];
+  }
+
+  const serializedRequest = {
+    url: req.url,
+    headers,
+    method: req.method,
+    mode: req.mode,
+    credentials: req.credentials,
+    cache: req.cache,
+    redirect: req.redirect,
+    referrer: req.referrer
+  };
+
+  if (req.method === 'POST') {
+    return req
+      .clone()
+      .text()
+      .then(body => {
+        serializedRequest.body = body;
+        return Promise.resolve(serializedRequest);
+      });
+  }
+  return Promise.resolve(serializedRequest);
+};
+
+const deserializeRequest = data => Promise.resolve(new Request(data.url, data));
 
 const responsify = value =>
   new Response(JSON.stringify(value), {
@@ -52,6 +142,16 @@ function openStore(storeName) {
         reviewsStore.createIndex('restaurantId', 'restaurant_id', {
           unique: false
         });
+
+        reviewsStore.createIndex('temp', 'localId', {
+          unique: false
+        });
+      }
+
+      if (e.oldVersion < 3) {
+        db.createObjectStore(REQUEST_DB_STORE, {
+          keyPath: 'localId'
+        });
       }
     };
 
@@ -71,7 +171,10 @@ function fetchRestaurants(req) {
   const matches = requestUrl.pathname.match(/(\d+)\/?$/);
 
   return new Promise((resolve, reject) => {
-    fetch(req)
+    const queueRequest = navigator.onLine
+      ? flushQueue().then(() => fetch(req))
+      : fetch(req.clone());
+    queueRequest
       .then(res => {
         resolve(res.clone());
         res.json().then(data => {
@@ -82,16 +185,33 @@ function fetchRestaurants(req) {
         });
       })
       .catch(() => {
-        openStore(RESTAURANT_DB_STORE)
-          .then(store => {
-            const getRequest = matches
-              ? store.get(Number(matches[1]))
-              : store.getAll();
-            getRequest.onsuccess = () => {
-              resolve(responsify(getRequest.result));
-            };
-          })
-          .catch(() => console.error('Cannot Open Store'));
+        if (req.method === 'PUT') {
+          enqueueRequest(req.clone()).then(() => {
+            const requestUrl = new URL(req.url);
+            const is_favorite = requestUrl.searchParams.get('is_favorite');
+            console.log(is_favorite);
+            openStore(RESTAURANT_DB_STORE).then(store => {
+              store.get(Number(matches[1])).onsuccess = e => {
+                const restaurant = {
+                  ...e.target.result,
+                  is_favorite
+                };
+                store.put(restaurant);
+                resolve(responsify(restaurant));
+              };
+            });
+          });
+        } else {
+          openStore(RESTAURANT_DB_STORE)
+            .then(store => {
+              const getRequest = matches
+                ? store.get(Number(matches[1]))
+                : store.getAll();
+              getRequest.onsuccess = () =>
+                resolve(responsify(getRequest.result));
+            })
+            .catch(() => console.error('Cannot Open Store'));
+        }
       });
   });
 }
@@ -100,25 +220,43 @@ function fetchReviews(req) {
   const requestUrl = new URL(req.url);
   const restaurantId = requestUrl.searchParams.get('restaurant_id');
 
-  return new Promise((resolve, reject) => {
-    fetch(req)
+  return new Promise(resolve => {
+    const queueRequest = navigator.onLine
+      ? flushQueue().then(() => fetch(req))
+      : fetch(req.clone());
+    queueRequest
       .then(res => {
         resolve(res.clone());
         res.json().then(data => {
+          const reviews = Array.isArray(data) ? data : [data];
           openStore(REVIEW_DB_STORE).then(store => {
-            data.forEach(review => store.put(review));
+            reviews.forEach(review => store.put(review));
           });
         });
       })
       .catch(() => {
-        openStore(REVIEW_DB_STORE).then(store => {
-          store
-            .index('restaurantId')
-            .getAll(Number(restaurantId)).onsuccess = event => {
-            const reviews = event.target.result;
-            resolve(responsify(reviews));
-          };
-        });
+        if (req.method === 'POST') {
+          enqueueRequest(req.clone()).then(localId => {
+            req.json().then(review =>
+              resolve(
+                responsify({
+                  ...review,
+                  createdAt: new Date().toISOString(),
+                  localId
+                })
+              )
+            );
+          });
+        } else {
+          openStore(REVIEW_DB_STORE).then(store => {
+            store
+              .index('restaurantId')
+              .getAll(Number(restaurantId)).onsuccess = event => {
+              const reviews = event.target.result;
+              resolve(responsify(reviews));
+            };
+          });
+        }
       });
   });
 }
