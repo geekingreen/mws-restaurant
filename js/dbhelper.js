@@ -19,7 +19,11 @@ class DBHelper {
    * Fetch all restaurants.
    */
   static fetchRestaurants() {
-    return DBHelper.fetch(`${DBHelper.DATABASE_URL}/restaurants`);
+    return this.restaurantPromise
+      ? this.restaurantPromise
+      : (this.restaurantPromise = DBHelper.fetch(
+          `${DBHelper.DATABASE_URL}/restaurants`
+        ));
   }
 
   /**

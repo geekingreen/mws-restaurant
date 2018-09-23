@@ -1,6 +1,18 @@
 let restaurant;
 var map;
 
+window.onload = () => {
+  fetchRestaurantFromURL().then(fillBreadcrumb);
+  setTimeout(() => {
+    const mapsScript = document.createElement('script');
+
+    mapsScript.src =
+      'https://maps.googleapis.com/maps/api/js?key=AIzaSyA1e64IZL8X_1_I0kg4D0v1zWydW3eXkOc&libraries=places&callback=initMap';
+
+    document.querySelector('body').appendChild(mapsScript);
+  }, 1000);
+};
+
 /**
  * Initialize Google map, called from HTML.
  */
@@ -12,7 +24,6 @@ window.initMap = () => {
         center: restaurant.latlng,
         scrollwheel: false
       });
-      fillBreadcrumb();
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
     })
     .catch(err => console.error(err));
@@ -135,11 +146,13 @@ createReviewForm = e => {
 
   form.onsubmit = e => {
     e.preventDefault();
-    DBHelper.submitRestaurantReview(e, restaurant).then(review => {
-      console.log(review);
-      const reviewsList = document.getElementById('reviews-list');
-      reviewsList.appendChild(createReviewHTML(review));
-    }).catch(err => console.error(err));
+    DBHelper.submitRestaurantReview(e, restaurant)
+      .then(review => {
+        console.log(review);
+        const reviewsList = document.getElementById('reviews-list');
+        reviewsList.appendChild(createReviewHTML(review));
+      })
+      .catch(err => console.error(err));
   };
 
   return form;

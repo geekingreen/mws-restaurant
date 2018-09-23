@@ -37,6 +37,7 @@ const enqueueRequest = req =>
     )
   );
 
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
 const flushQueue = () =>
   openStore(REQUEST_DB_STORE).then(store => {
     return new Promise(resolve => {
@@ -62,17 +63,17 @@ const flushQueue = () =>
                   openStore(REQUEST_DB_STORE).then(store => {
                     store.clear();
                   });
-                  openStore(REVIEW_DB_STORE).then(store => {
-                    store.index('temp').onsuccess = e => {
-                      e.target.result.openCursor().onsuccess = e => {
-                        const cursor = e.target.result;
-                        while (cursor) {
-                          cursor.delete();
-                          cursor.continue();
-                        }
-                      };
-                    };
-                  });
+                  // openStore(REVIEW_DB_STORE).then(store => {
+                  //   store.index('temp').onsuccess = e => {
+                  //     e.target.result.openCursor().onsuccess = e => {
+                  //       const cursor = e.target.result;
+                  //       while (cursor) {
+                  //         cursor.delete();
+                  //         cursor.continue();
+                  //       }
+                  //     };
+                  //   };
+                  // });
                   resolve();
                 })
             )
@@ -81,6 +82,7 @@ const flushQueue = () =>
     });
   });
 
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
 const serializeRequest = req => {
   const headers = {};
 
@@ -111,6 +113,7 @@ const serializeRequest = req => {
   return Promise.resolve(serializedRequest);
 };
 
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
 const deserializeRequest = data => Promise.resolve(new Request(data.url, data));
 
 const responsify = value =>

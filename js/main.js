@@ -64,6 +64,18 @@ fillCuisinesHTML = (cuisines = self.cuisines) => {
 /**
  * Initialize Google map, called from HTML.
  */
+window.onload = () => {
+  updateRestaurants();
+  setTimeout(() => {
+    const mapsScript = document.createElement('script');
+
+    mapsScript.src =
+      'https://maps.googleapis.com/maps/api/js?key=AIzaSyA1e64IZL8X_1_I0kg4D0v1zWydW3eXkOc&libraries=places&callback=initMap';
+
+    document.querySelector('body').appendChild(mapsScript);
+  }, 1000);
+};
+
 window.initMap = () => {
   let loc = {
     lat: 40.722216,
@@ -74,7 +86,7 @@ window.initMap = () => {
     center: loc,
     scrollwheel: false
   });
-  updateRestaurants();
+  addMarkersToMap();
 };
 
 /**
@@ -121,7 +133,9 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
   restaurants.forEach(restaurant => {
     ul.append(createRestaurantHTML(restaurant));
   });
-  addMarkersToMap();
+  if (window.google) {
+    addMarkersToMap();
+  }
 };
 
 createFavoriteHTML = restaurant => {
