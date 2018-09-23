@@ -24,7 +24,7 @@ const DEFAULT_ASSETS = [
   '/js/sw-helper.js'
 ];
 
-// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html (9/23/18)
 const enqueueRequest = req =>
   serializeRequest(req).then(serializedRequest =>
     openStore(REQUEST_DB_STORE).then(
@@ -37,7 +37,7 @@ const enqueueRequest = req =>
     )
   );
 
-// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html (9/23/18)
 const flushQueue = () =>
   openStore(REQUEST_DB_STORE).then(store => {
     return new Promise(resolve => {
@@ -81,7 +81,7 @@ const flushQueue = () =>
     });
   });
 
-// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html (9/23/18)
 const serializeRequest = req => {
   const headers = {};
 
@@ -112,7 +112,7 @@ const serializeRequest = req => {
   return Promise.resolve(serializedRequest);
 };
 
-// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html
+// Credit: https://serviceworke.rs/request-deferrer_service-worker_doc.html (9/23/18)
 const deserializeRequest = data => Promise.resolve(new Request(data.url, data));
 
 const responsify = value =>
