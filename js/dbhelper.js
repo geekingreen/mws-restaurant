@@ -19,6 +19,7 @@ class DBHelper {
    * Fetch all restaurants.
    */
   static fetchRestaurants() {
+    console.log(this.restaurantPromise)
     return this.restaurantPromise
       ? this.restaurantPromise
       : (this.restaurantPromise = DBHelper.fetch(

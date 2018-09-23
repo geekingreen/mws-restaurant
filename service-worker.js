@@ -63,18 +63,17 @@ const flushQueue = () =>
                   openStore(REQUEST_DB_STORE).then(store => {
                     store.clear();
                   });
-                  // openStore(REVIEW_DB_STORE).then(store => {
-                  //   store.index('temp').onsuccess = e => {
-                  //     e.target.result.openCursor().onsuccess = e => {
-                  //       const cursor = e.target.result;
-                  //       while (cursor) {
-                  //         cursor.delete();
-                  //         cursor.continue();
-                  //       }
-                  //     };
-                  //   };
-                  // });
-                  resolve();
+                  openStore(REVIEW_DB_STORE).then(store => {
+                    store.index('temp').openCursor().onsuccess = e => {
+                      const cursor = e.target.result;
+                      if (cursor) {
+                        cursor.delete();
+                        cursor.continue();
+                      } else {
+                        resolve();
+                      }
+                    };
+                  });
                 })
             )
         );
@@ -192,7 +191,6 @@ function fetchRestaurants(req) {
           enqueueRequest(req.clone()).then(() => {
             const requestUrl = new URL(req.url);
             const is_favorite = requestUrl.searchParams.get('is_favorite');
-            console.log(is_favorite);
             openStore(RESTAURANT_DB_STORE).then(store => {
               store.get(Number(matches[1])).onsuccess = e => {
                 const restaurant = {
@@ -205,15 +203,12 @@ function fetchRestaurants(req) {
             });
           });
         } else {
-          openStore(RESTAURANT_DB_STORE)
-            .then(store => {
-              const getRequest = matches
-                ? store.get(Number(matches[1]))
-                : store.getAll();
-              getRequest.onsuccess = () =>
-                resolve(responsify(getRequest.result));
-            })
-            .catch(() => console.error('Cannot Open Store'));
+          openStore(RESTAURANT_DB_STORE).then(store => {
+            const getRequest = matches
+              ? store.get(Number(matches[1]))
+              : store.getAll();
+            getRequest.onsuccess = () => resolve(responsify(getRequest.result));
+          });
         }
       });
   });
@@ -240,15 +235,17 @@ function fetchReviews(req) {
       .catch(() => {
         if (req.method === 'POST') {
           enqueueRequest(req.clone()).then(localId => {
-            req.json().then(review =>
-              resolve(
-                responsify({
-                  ...review,
-                  createdAt: new Date().toISOString(),
-                  localId
-                })
-              )
-            );
+            req.json().then(review => {
+              const reviewData = {
+                ...review,
+                createdAt: new Date().toISOString(),
+                localId
+              };
+              openStore(REVIEW_DB_STORE).then(store => {
+                store.put({ ...reviewData, id: localId }).onsuccess = () =>
+                  resolve(responsify(reviewData));
+              });
+            });
           });
         } else {
           openStore(REVIEW_DB_STORE).then(store => {

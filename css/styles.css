@@ -82,7 +82,7 @@ img {
 .breadcrumb .breadcrumb-item + .breadcrumb-item:before {
   padding: 8px;
   color: #fff;
-  content: "/\00a0";
+  content: '/\00a0';
 }
 
 /* ====================== Map ====================== */
@@ -256,7 +256,7 @@ img {
 .reviews-list-item {
   border: 1px solid #999;
   border-radius: 5px;
-  box-shadow: 2px 2px 3px -1px rgba(0,0,0,0.5);
+  box-shadow: 2px 2px 3px -1px rgba(0, 0, 0, 0.5);
   flex: 1 1 45%;
   font-size: 0.8rem;
   min-width: 280px;
@@ -271,6 +271,20 @@ img {
 .reviews-list-item__rating {
   font-weight: bold;
 }
+
+.review-form {
+  border: 1px solid #999;
+  border-radius: 5px;
+  box-shadow: 2px 2px 3px -1px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  align-items: flex-start;
+  height: 250px;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
 #restaurant-hours {
   margin: 0 auto 15px auto;
 }

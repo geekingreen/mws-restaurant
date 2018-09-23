@@ -65,15 +65,16 @@ fillCuisinesHTML = (cuisines = self.cuisines) => {
  * Initialize Google map, called from HTML.
  */
 window.onload = () => {
-  updateRestaurants();
-  setTimeout(() => {
-    const mapsScript = document.createElement('script');
+  updateRestaurants().then(() => {
+    setTimeout(() => {
+      const mapsScript = document.createElement('script');
 
-    mapsScript.src =
-      'https://maps.googleapis.com/maps/api/js?key=AIzaSyA1e64IZL8X_1_I0kg4D0v1zWydW3eXkOc&libraries=places&callback=initMap';
+      mapsScript.src =
+        'https://maps.googleapis.com/maps/api/js?key=AIzaSyA1e64IZL8X_1_I0kg4D0v1zWydW3eXkOc&libraries=places&callback=initMap';
 
-    document.querySelector('body').appendChild(mapsScript);
-  }, 1000);
+      document.querySelector('body').appendChild(mapsScript);
+    }, 1000);
+  });
 };
 
 window.initMap = () => {
@@ -102,7 +103,7 @@ updateRestaurants = () => {
   const cuisine = cSelect[cIndex].value;
   const neighborhood = nSelect[nIndex].value;
 
-  DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood)
+  return DBHelper.fetchRestaurantByCuisineAndNeighborhood(cuisine, neighborhood)
     .then(restaurants => {
       resetRestaurants(restaurants);
       fillRestaurantsHTML();

@@ -114,6 +114,9 @@ createReviewForm = e => {
   const form = document.createElement('form');
   form.className = 'review-form';
 
+  const heading = document.createElement('h3');
+  heading.innerText = 'Leave a review';
+
   const nameLabel = document.createElement('label');
   nameLabel.innerHTML = 'Name: ';
   const nameInput = document.createElement('input');
@@ -139,6 +142,7 @@ createReviewForm = e => {
   submitButton.type = 'submit';
   submitButton.innerHTML = 'Submit Comment';
 
+  form.appendChild(heading);
   form.appendChild(nameLabel);
   form.appendChild(ratingLabel);
   form.appendChild(commentLabel);
@@ -148,9 +152,9 @@ createReviewForm = e => {
     e.preventDefault();
     DBHelper.submitRestaurantReview(e, restaurant)
       .then(review => {
-        console.log(review);
         const reviewsList = document.getElementById('reviews-list');
         reviewsList.appendChild(createReviewHTML(review));
+        form.reset();
       })
       .catch(err => console.error(err));
   };
@@ -166,12 +170,12 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const title = document.createElement('h2');
   title.innerHTML = 'Reviews';
   container.appendChild(title);
-  container.appendChild(createReviewForm());
 
   if (!reviews || reviews.length === 0) {
     const noReviews = document.createElement('p');
     noReviews.innerHTML = 'No reviews yet!';
     container.appendChild(noReviews);
+    container.appendChild(createReviewForm());
     return;
   }
   const ul = document.getElementById('reviews-list');
@@ -179,6 +183,7 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
     ul.appendChild(createReviewHTML(review));
   });
   container.appendChild(ul);
+  container.appendChild(createReviewForm());
 };
 
 /**
@@ -226,12 +231,5 @@ fillBreadcrumb = (restaurant = self.restaurant) => {
 /**
  * Get a parameter by name from page URL.
  */
-getParameterByName = (name, url) => {
-  if (!url) url = window.location.href;
-  name = name.replace(/[\[\]]/g, '\\$&');
-  const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
-    results = regex.exec(url);
-  if (!results) return null;
-  if (!results[2]) return '';
-  return decodeURIComponent(results[2].replace(/\+/g, ' '));
-};
+getParameterByName = (name, url) =>
+  new URL(url || window.location.href).searchParams.get(name);
